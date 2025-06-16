@@ -18,8 +18,9 @@ const app = express();
 app.set('view engine','ejs');
 
 //this will allow us to serve up static files, CSS, images & JS
-app.use(express.static('public'));
-
+//app.use(express.static('public'));
+//app.use(express.static(__dirname + '/public'));
+app.use(express.static(__dirname));
 //index/home URL
 app.get('/',(req,res)=>{
     let title = "Home Page";
@@ -31,6 +32,10 @@ app.get('/about',(req,res)=>{
     let title = "About Page";
     res.render('pages/about',{'title': title});
 });
+
+const recipeRoutes = require('./routes/recipes');
+app.use('/recipes', recipeRoutes);
+
 
 //Set server to listen for requests
 app.listen(port, () => {
