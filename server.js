@@ -14,6 +14,9 @@ const port = 3000;
 //create instance of Express app
 const app = express();
 
+//reference test json file of users
+var data = require('./test.json');
+
 //ejs is templating engine
 app.set('view engine','ejs');
 
@@ -40,5 +43,6 @@ app.use('/recipes', recipeRoutes);
 //Set server to listen for requests
 app.listen(port, () => {
   console.log(`Server running at port: ${port}`);
+  console.log(data);
 });
 
