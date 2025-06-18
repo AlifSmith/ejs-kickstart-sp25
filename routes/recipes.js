@@ -30,6 +30,23 @@ router.get('/:id', async (req, res) => {
 router.post('/edit/:id', async (req, res) => {
   const { id } = req.params;
 
+  router.post('/upload-pic/:id', upload.single('image'), async (req, res) => {
+  try {
+    req.session.message = {
+      type: 'success',
+      text: 'Image uploaded successfully!'
+    };
+    res.redirect(`/recipes/${req.params.id}`);
+  } catch (err) {
+    console.error('Upload error:', err);
+    req.session.message = {
+      type: 'danger',
+      text: 'Image upload failed!'
+    };
+    res.redirect(`/recipes/${req.params.id}`);
+  }
+});
+
   const updatedData = {
     name: req.body.name,
     author: req.body.author,
@@ -99,6 +116,33 @@ router.post('/add', async (req, res) => {
     console.error('❌ Error adding recipe:', err);
     req.session.message = { type: 'danger', text: 'There was an error adding the recipe.' };
     res.redirect('/recipes/add');
+  }
+});
+
+const multer = require('multer');
+const path = require('path');
+
+// Set up storage destination and filename using recipe ID
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '../public/images/recipes'));
+  },
+  filename: function (req, file, cb) {
+    cb(null, `${req.params.id}.jpg`);
+  }
+});
+const upload = multer({ storage });
+
+/** GET: Show Upload Form */
+router.get('/upload-pic/:id', async (req, res) => {
+  try {
+    const recipe = await Recipe.findById(req.params.id);
+    if (!recipe) throw new Error('Recipe not found');
+    res.render('recipes/upload-pic', { recipe, title: 'Upload Recipe Image' });
+  } catch (err) {
+    console.error('Error loading upload form:', err);
+    req.session.message = { type: 'danger', text: 'Could not load image upload form.' };
+    res.redirect('/recipes');
   }
 });
 
