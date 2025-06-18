@@ -58,6 +58,51 @@ router.post('/edit/:id', async (req, res) => {
 });
 
 
+router.get('/add', async (req, res) => {
+  try {
+    const categories = await Category.find().sort({ name: 1 });
+    res.render('recipes/add', { categories ,title: 'Add Recipe' });
+  } catch (err) {
+    console.error('Error loading add form:', err);
+    req.session.message = { type: 'danger', text: 'Could not load add form.' };
+    res.redirect('/recipes');
+  }
+});
+
+router.post('/add', async (req, res) => {
+  try {
+    const { name, author, description, ingredients, instructions, rating, category } = req.body;
+
+    // Validate rating is a number between 1 and 5
+    const parsedRating = parseFloat(rating);
+    if (isNaN(parsedRating) || parsedRating < 1 || parsedRating > 5) {
+      req.session.message = { type: 'danger', text: 'Rating must be a number between 1 and 5.' };
+      return res.redirect('/recipes/add');
+    }
+
+    // Create and save new recipe
+    const newRecipe = new Recipe({
+      name,
+      author,
+      description,
+      ingredients,
+      instructions,
+      rating: parsedRating,
+      category
+    });
+
+    await newRecipe.save();
+    req.session.message = { type: 'success', text: 'Recipe added successfully!' };
+
+    res.redirect(`/recipes/${newRecipe._id}`);
+  } catch (err) {
+    console.error('❌ Error adding recipe:', err);
+    req.session.message = { type: 'danger', text: 'There was an error adding the recipe.' };
+    res.redirect('/recipes/add');
+  }
+});
+
+
 router.get('/edit/:id', async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id).populate('category').exec();
