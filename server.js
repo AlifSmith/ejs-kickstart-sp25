@@ -44,7 +44,15 @@ app.get('/about',(req,res)=>{
   res.render("pages/about", {title:"about"});
 });
 
+//games page/url
+app.get('/games',(req,res)=>{
+  res.render("pages/games", {title:"games"});
+});
 
+//nba page/url
+app.get('/nba',(req,res)=>{
+  res.render("pages/nba", {title:"nba"});
+});
 
 // Users list page
 app.get("/users", (req, res) => {
