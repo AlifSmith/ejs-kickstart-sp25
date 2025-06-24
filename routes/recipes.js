@@ -1,3 +1,4 @@
+//routes/recipes.js
 const express = require('express');
 const router = express.Router();
 const Recipe = require('../models/Recipe');
@@ -13,67 +14,6 @@ router.get('/', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-
-// GET single recipe by ID (view)
-router.get('/:id', async (req, res) => {
-  try {
-    const recipe = await Recipe.findById(req.params.id).populate('category').lean();
-    if (!recipe) return res.status(404).send('Recipe not found');
-    res.render('recipes/view', { recipe });
-  } catch (err) {
-    console.error('Error fetching recipe:', err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Update of edit
-router.post('/edit/:id', async (req, res) => {
-  const { id } = req.params;
-
-  router.post('/upload-pic/:id', upload.single('image'), async (req, res) => {
-  try {
-    req.session.message = {
-      type: 'success',
-      text: 'Image uploaded successfully!'
-    };
-    res.redirect(`/recipes/${req.params.id}`);
-  } catch (err) {
-    console.error('Upload error:', err);
-    req.session.message = {
-      type: 'danger',
-      text: 'Image upload failed!'
-    };
-    res.redirect(`/recipes/${req.params.id}`);
-  }
-});
-
-  const updatedData = {
-    name: req.body.name,
-    author: req.body.author,
-    description: req.body.description,
-    ingredients: req.body.ingredients,
-    instructions: req.body.instructions,
-    rating: parseFloat(req.body.rating),
-    category: req.body.category
-  };
-
-  try {
-    await Recipe.updateOne({ _id: id }, updatedData);
-    req.session.message = {
-      type: 'success',
-      text: '✅ Recipe updated successfully!'
-    };
-    res.redirect(`/recipes/${id}`);
-  } catch (err) {
-    console.error('Update error:', err);
-    req.session.message = {
-      type: 'danger',
-      text: '❌ Failed to update recipe. Please try again.'
-    };
-    res.redirect(`/recipes/edit/${id}`);
-  }
-});
-
 
 router.get('/add', async (req, res) => {
   try {
@@ -146,6 +86,17 @@ router.get('/upload-pic/:id', async (req, res) => {
   }
 });
 
+// GET single recipe by ID (view)
+router.get('/:id', async (req, res) => {
+  try {
+    const recipe = await Recipe.findById(req.params.id).populate('category').lean();
+    if (!recipe) return res.status(404).send('Recipe not found');
+    res.render('recipes/view', { recipe });
+  } catch (err) {
+    console.error('Error fetching recipe:', err);
+    res.status(500).send('Server Error');
+  }
+});
 
 router.get('/edit/:id', async (req, res) => {
   try {
@@ -158,5 +109,86 @@ router.get('/edit/:id', async (req, res) => {
   }
 });
 
+router.post('/edit/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const updatedData = {
+    name: req.body.name,
+    author: req.body.author,
+    description: req.body.description,
+    ingredients: req.body.ingredients,
+    instructions: req.body.instructions,
+    rating: parseFloat(req.body.rating),
+    category: req.body.category
+  };
+
+  try {
+    await Recipe.updateOne({ _id: id }, updatedData);
+    req.session.message = {
+      type: 'success',
+      text: '✅ Recipe updated successfully!'
+    };
+    res.redirect(`/recipes/${id}`);
+  } catch (err) {
+    console.error('Update error:', err);
+    req.session.message = {
+      type: 'danger',
+      text: '❌ Failed to update recipe. Please try again.'
+    };
+    res.redirect(`/recipes/edit/${id}`);
+  }
+});
+
+router.post('/upload-pic/:id', upload.single('image'), async (req, res) => {
+  try {
+    req.session.message = {
+      type: 'success',
+      text: 'Image uploaded successfully!'
+    };
+    res.redirect(`/recipes/${req.params.id}`);
+  } catch (err) {
+    console.error('Upload error:', err);
+    req.session.message = {
+      type: 'danger',
+      text: 'Image upload failed!'
+    };
+    res.redirect(`/recipes/${req.params.id}`);
+  }
+});
+
+const fs = require('fs');
+const imagePath = path.join(__dirname, '../public/images/recipes');
+
+/** DELETE: Remove a Recipe */
+router.delete('/:id', async (req, res) => {
+  try {
+    const recipe = await Recipe.findByIdAndDelete(req.params.id);
+    if (recipe) {
+      // Attempt to delete associated image
+      const imgFile = path.join(imagePath, `${recipe._id}.jpg`);
+      if (fs.existsSync(imgFile)) {
+        fs.unlinkSync(imgFile);
+      }
+
+      req.session.message = {
+        type: 'success',
+        text: 'Recipe and image deleted successfully.'
+      };
+    } else {
+      req.session.message = {
+        type: 'danger',
+        text: 'Recipe not found.'
+      };
+    }
+    res.redirect('/recipes');
+  } catch (err) {
+    console.error('❌ Delete error:', err);
+    req.session.message = {
+      type: 'danger',
+      text: 'Error deleting recipe.'
+    };
+    res.redirect('/recipes');
+  }
+});
 
 module.exports = router;

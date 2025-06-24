@@ -1,18 +1,23 @@
+
 //include Express
 const express = require('express');
-
-//includes .env file for credentials
-require('dotenv').config();
-
-//manages database connectivity
-require('./models/mongoose');
-
 
 //server will listen on this port
 const port = 3000;
 
 //create instance of Express app
 const app = express();
+const data = require("./test.json");
+//includes .env file for credentials
+require('dotenv').config();
+//manages database connectivity
+require('./models/mongoose');
+
+app.set("view engine", "ejs");
+app.use(express.static("public")); 
+//allows us to delete records
+const methodOverride = require('method-override');
+app.use(methodOverride('_method'));
 
 const session = require('express-session');
 app.use(session({ secret: 'secret', resave: false, saveUninitialized: true }));
@@ -25,36 +30,40 @@ app.use((req, res, next) => {
   next();
 });
 
-
-//reference test json file of users
-var data = require('./test.json');
-
-//ejs is templating engine
-app.set('view engine','ejs');
-
-//this will allow us to serve up static files, CSS, images & JS
-//app.use(express.static('public'));
-//app.use(express.static(__dirname + '/public'));
-app.use(express.static(__dirname));
-//index/home URL
-app.get('/',(req,res)=>{
-    let title = "Home Page";
-    res.render('pages/index',{'title': title});
-});
-
-//about URL
-app.get('/about',(req,res)=>{
-    let title = "About Page";
-    res.render('pages/about',{'title': title});
-});
-
+// Recipe routes
 const recipeRoutes = require('./routes/recipes');
 app.use('/recipes', recipeRoutes);
 
+//index/home URL
+app.get('/',(req,res)=>{
+  res.render("pages/index", {title:"Home"});
+});
 
+//about page/url
+app.get('/about',(req,res)=>{
+  res.render("pages/about", {title:"about"});
+});
+
+
+
+// Users list page
+app.get("/users", (req, res) => {
+  res.render("users/index", {
+    title: "Users",
+    users: data,
+  });
+});
+
+// User view page
+app.get("/users/view/:id", (req, res) => {
+  const user = data.find(u => u.id == req.params.id);
+  res.render("users/view", {
+    title: "User Page",
+    user,
+    bio_data: user.bio_data,
+  });
+});
 //Set server to listen for requests
 app.listen(port, () => {
   console.log(`Server running at port: ${port}`);
-  console.log(data);
 });
-
